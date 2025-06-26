@@ -14,6 +14,6 @@ export class UserController {
 
   @Get('hello')
   getHello(): string {
-    return 'hello world !!!';
+    return 'hello world';
   }
 }

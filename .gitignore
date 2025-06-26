@@ -58,3 +58,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /generated/prisma
 
 /generated/prisma
+
+google-cloud-sdk-456.0.0-darwin-arm.tar.gz
+/google-cloud-sdk

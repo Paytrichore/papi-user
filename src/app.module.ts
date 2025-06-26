@@ -2,12 +2,14 @@ import { Module } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
     UserModule,
     AuthModule,
-    MongooseModule.forRoot('mongodb+srv://petrichore:bebelaur3t@petricator.zbaml.mongodb.net/?retryWrites=true&w=majority&appName=Petricator')
+    MongooseModule.forRoot(process.env.DB_URL || ''),
+    ConfigModule.forRoot({ isGlobal: true })
   ],
   controllers: [],
   providers: [],

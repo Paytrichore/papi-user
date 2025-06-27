@@ -2,7 +2,7 @@ import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 export class CreateUserDTO {
   @IsNotEmpty()
-  readonly name: string;
+  readonly username: string;
 
   @IsEmail()
   readonly email: string;

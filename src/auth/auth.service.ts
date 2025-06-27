@@ -11,10 +11,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateOAuthLogin(email: string, name: string): Promise<any> {
+  async validateOAuthLogin(email: string, username: string): Promise<any> {
     let user = await this.userService.findByEmail(email);
     if (!user) {
-      user = await this.userService.createUser({ email, name, password: '' });
+      user = await this.userService.createUser({ email, username, password: '' });
     }
     const payload = { email: user.email, sub: user._id };
     return {

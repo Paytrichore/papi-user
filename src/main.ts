@@ -16,6 +16,7 @@ async function bootstrap() {
       const allowedOrigins = [
         /^http:\/\/localhost:\d+$/,
         /^https:\/\/petricator(-dev)?-\d+\.us-central1\.run\.app$/,
+        /^https:\/\/[a-zA-Z0-9-]+-812288085862\.us-central1\.run\.app$/
       ];
       if (!origin || allowedOrigins.some(regex => regex.test(origin))) {
         callback(null, true);

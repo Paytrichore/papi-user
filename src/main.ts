@@ -5,6 +5,23 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Autorise localhost, tous les sous-domaines de dev et le domaine prod
+      const allowedOrigins = [
+        /^http:\/\/localhost:\d+$/,
+        /^https:\/\/petricator(-dev)?-\d+\.us-central1\.run\.app$/,
+      ];
+      if (!origin || allowedOrigins.some(regex => regex.test(origin))) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  });
+
   const port = process.env.PORT || 3000;
   await app.listen(port); 
 }

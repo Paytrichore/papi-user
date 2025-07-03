@@ -27,7 +27,7 @@ export class AuthController {
   @Post('register')
   async register(@Body() createUserDto: CreateUserDTO) {
     const existing = await this.userService.findByEmail(createUserDto.email);
-    if (existing) throw new BadRequestException('Email already in use');
+    if (existing) throw new BadRequestException('Cet email est déjà utilisé');
     const user = await this.userService.createUser(createUserDto);
     const token = await this.authService.login(user);
     return { access_token: token, user };
@@ -37,7 +37,7 @@ export class AuthController {
   async login(@Body('email') email: string, @Body('password') password: string) {
     const user = await this.authService.validateUser(email, password);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Email ou mot de passe incorrect');
     }
     const token = await this.authService.login(user);
     return {

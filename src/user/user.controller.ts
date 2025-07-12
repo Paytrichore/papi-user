@@ -18,9 +18,4 @@ export class UserController {
   async getProfile(@Req() req) {
     return req.user;
   }
-
-  @Get('hello')
-  getHello(): string {
-    return 'hello world !!!!!';
-  }
 }

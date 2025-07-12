@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDTO } from 'src/user/dto/createUser.dto';
@@ -8,7 +8,7 @@ import { UserService } from 'src/user/user.service';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly userService: UserService, // Assurez-vous d'importer UserService
+    private readonly userService: UserService,
   ) {}
 
   @Get('google')
@@ -27,7 +27,12 @@ export class AuthController {
   @Post('register')
   async register(@Body() createUserDto: CreateUserDTO) {
     const existing = await this.userService.findByEmail(createUserDto.email);
-    if (existing) throw new BadRequestException('Cet email est déjà utilisé');
+    if (existing) {
+      throw new HttpException(
+        { error: { code: 'EMAIL_ALREADY_IN_USE' } },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const user = await this.userService.createUser(createUserDto);
     const token = await this.authService.login(user);
     return { access_token: token, user };
@@ -37,7 +42,10 @@ export class AuthController {
   async login(@Body('email') email: string, @Body('password') password: string) {
     const user = await this.authService.validateUser(email, password);
     if (!user) {
-      throw new UnauthorizedException('Email ou mot de passe incorrect');
+      throw new HttpException(
+        { error: { code: 'INVALID_CREDENTIALS' } },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     const token = await this.authService.login(user);
     return {

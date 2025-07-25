@@ -1,8 +1,18 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDTO } from 'src/user/dto/createUser.dto';
 import { UserService } from 'src/user/user.service';
+import { Types } from 'mongoose';
 
 @Controller('auth')
 export class AuthController {
@@ -39,7 +49,10 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body('email') email: string, @Body('password') password: string) {
+  async login(
+    @Body('email') email: string,
+    @Body('password') password: string,
+  ) {
     const user = await this.authService.validateUser(email, password);
     if (!user) {
       throw new HttpException(
@@ -48,9 +61,12 @@ export class AuthController {
       );
     }
     const token = await this.authService.login(user);
+    const userStatus = await this.userService.getUserStatus(
+      user._id as Types.ObjectId,
+    );
     return {
       access_token: token,
-      user,
+      userStatus,
     };
   }
 }

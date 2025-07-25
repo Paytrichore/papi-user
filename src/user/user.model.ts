@@ -15,7 +15,7 @@ export class UserEntity {
   @Prop({ default: 10 })
   actionPoints: number;
 
-  @Prop({ default: () => new Date(Date.now() + 12 * 60 * 60 * 1000) })
+  @Prop()
   nextDLA: Date;
 
   @Prop({ default: false })

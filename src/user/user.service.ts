@@ -42,8 +42,9 @@ export class UserService {
     await this.migrateUserIfNeeded(user);
 
     const now = new Date();
+    const nextDLA = new Date(user.nextDLA);
 
-    if (now >= user.nextDLA) {
+    if (now >= nextDLA) {
       user.actionPoints = 10;
       user.drafted = false;
       user.nextDLA = new Date(now.getTime() + 12 * 60 * 60 * 1000);
@@ -84,37 +85,38 @@ export class UserService {
 
   // Récupère le statut complet de l'utilisateur avec DLA à jour
   async getUserStatus(
-    userId: string | Types.ObjectId,
-  ): Promise<{
-    _id: string;
-    username: string;
-    email: string;
-    actionPoints: number;
-    nextDLA: Date;
-    drafted: boolean;
-    timeUntilNextDLA: { hours: number; minutes: number };
-  }> {
-    const user = await this.checkAndUpdateDLA(userId);
+  userId: string | Types.ObjectId,
+): Promise<{
+  _id: string;
+  username: string;
+  email: string;
+  actionPoints: number;
+  nextDLA: Date;
+  drafted: boolean;
+  timeUntilNextDLA: { hours: number; minutes: number };
+}> {
+  const user = await this.checkAndUpdateDLA(userId);
 
-    const now = new Date();
-    const timeLeft = user.nextDLA.getTime() - now.getTime();
+  const now = new Date();
+  const nextDLA = new Date(user.nextDLA); // Correction ici
+  const timeLeft = nextDLA.getTime() - now.getTime();
 
-    const hours = Math.floor(timeLeft / (60 * 60 * 1000));
-    const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+  const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+  const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
 
-    return {
-      _id: user._id as string,
-      username: user.username,
-      email: user.email,
-      actionPoints: user.actionPoints,
-      nextDLA: user.nextDLA,
-      drafted: user.drafted,
-      timeUntilNextDLA: {
-        hours: Math.max(0, hours),
-        minutes: Math.max(0, minutes),
-      },
-    };
-  }
+  return {
+    _id: user._id as string,
+    username: user.username,
+    email: user.email,
+    actionPoints: user.actionPoints,
+    nextDLA: nextDLA,
+    drafted: user.drafted,
+    timeUntilNextDLA: {
+      hours: Math.max(0, hours),
+      minutes: Math.max(0, minutes),
+    },
+  };
+}
 
   // Migration automatique des utilisateurs existants
   private async migrateUserIfNeeded(user: UserDocument): Promise<UserDocument> {

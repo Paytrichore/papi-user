@@ -27,28 +27,28 @@ export class UserController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  async getProfile(@Req() req: JwtRequest) {
-    return this.userService.getUserStatus(req.user.sub);
+  async getProfile(@Req() req: any) {
+    return this.userService.getUserStatus(req.user.userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('use-points')
   async useActionPoints(
-    @Req() req: JwtRequest,
+    @Req() req: any,
     @Body('points') points: number,
   ) {
-    return this.userService.useActionPoints(req.user.sub, points);
+    return this.userService.useActionPoints(req.user.userId, points);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('draft')
-  async makeDraft(@Req() req: JwtRequest) {
-    return this.userService.makeDraft(req.user.sub);
+  async makeDraft(@Req() req: any) {
+    return this.userService.makeDraft(req.user.userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('status')
-  async getStatus(@Req() req: JwtRequest) {
-    return this.userService.getUserStatus(req.user.sub);
+  async getStatus(@Req() req: any) {
+    return this.userService.getUserStatus(req.user.userId);
   }
 }

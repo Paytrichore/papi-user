@@ -11,6 +11,15 @@ export class UserEntity {
 
   @Prop({ required: true })
   password: string;
+
+  @Prop({ default: 10 })
+  actionPoints: number;
+
+  @Prop({ default: () => new Date(Date.now() + 12 * 60 * 60 * 1000) })
+  nextDLA: Date;
+
+  @Prop({ default: false })
+  drafted: boolean;
 }
 
 export type UserDocument = UserEntity & Document;

@@ -6,10 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     UserModule,
     AuthModule,
     MongooseModule.forRoot(process.env.DB_URL || ''),
-    ConfigModule.forRoot({ isGlobal: true })
   ],
   controllers: [],
   providers: [],

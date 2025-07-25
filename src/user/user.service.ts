@@ -85,9 +85,15 @@ export class UserService {
   // Récupère le statut complet de l'utilisateur avec DLA à jour
   async getUserStatus(
     userId: string | Types.ObjectId,
-  ): Promise<
-    UserDocument & { timeUntilNextDLA: { hours: number; minutes: number } }
-  > {
+  ): Promise<{
+    _id: string;
+    username: string;
+    email: string;
+    actionPoints: number;
+    nextDLA: Date;
+    drafted: boolean;
+    timeUntilNextDLA: { hours: number; minutes: number };
+  }> {
     const user = await this.checkAndUpdateDLA(userId);
 
     const now = new Date();
@@ -96,12 +102,18 @@ export class UserService {
     const hours = Math.floor(timeLeft / (60 * 60 * 1000));
     const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
 
-    return Object.assign(user, {
+    return {
+      _id: user._id as string,
+      username: user.username,
+      email: user.email,
+      actionPoints: user.actionPoints,
+      nextDLA: user.nextDLA,
+      drafted: user.drafted,
       timeUntilNextDLA: {
         hours: Math.max(0, hours),
         minutes: Math.max(0, minutes),
       },
-    });
+    };
   }
 
   // Migration automatique des utilisateurs existants

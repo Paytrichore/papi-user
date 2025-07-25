@@ -96,13 +96,12 @@ export class UserService {
     const hours = Math.floor(timeLeft / (60 * 60 * 1000));
     const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
 
-    return {
-      ...user.toObject(),
+    return Object.assign(user, {
       timeUntilNextDLA: {
         hours: Math.max(0, hours),
         minutes: Math.max(0, minutes),
       },
-    };
+    });
   }
 
   // Migration automatique des utilisateurs existants

@@ -28,7 +28,8 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
   async getProfile(@Req() req: JwtRequest) {
-    return this.userService.getUserStatus(req.user.sub);
+    const result = await this.userService.getUserStatus(req.user.sub);
+    return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -49,6 +50,7 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   @Get('status')
   async getStatus(@Req() req: JwtRequest) {
-    return this.userService.getUserStatus(req.user.sub);
+    const result = await this.userService.getUserStatus(req.user.sub);
+    return result;
   }
 }

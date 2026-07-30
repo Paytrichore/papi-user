@@ -1,9 +1,20 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  MessageEvent,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/createUser.dto';
 import { UserEntity } from './user.model';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import { Observable } from 'rxjs';
+import { UserRealtimeService } from './user-realtime.service';
 
 export interface JwtPayload {
   sub: string;
@@ -18,7 +29,10 @@ export interface JwtRequest extends Request {
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly userRealtimeService: UserRealtimeService,
+  ) {}
 
   @Post()
   async createUser(@Body() createUserDto: CreateUserDTO): Promise<UserEntity> {
@@ -50,5 +64,14 @@ export class UserController {
   @Get('status')
   async getStatus(@Req() req: any) {
     return this.userService.getUserStatus(req.user.userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('events')
+  @Header('Content-Type', 'text/event-stream')
+  @Header('Cache-Control', 'no-cache')
+  @Header('Connection', 'keep-alive')
+  events(@Req() req: any): Observable<MessageEvent> {
+    return this.userRealtimeService.subscribe(req.user.userId);
   }
 }

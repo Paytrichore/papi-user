@@ -3,6 +3,9 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserEntity, UserEntitySchema } from './user.model';
+import { UserWebhookController } from './user-webhook.controller';
+import { WebhookSignatureService } from './webhook-signature.service';
+import { UserRealtimeService } from './user-realtime.service';
 
 @Module({
   imports: [
@@ -10,8 +13,8 @@ import { UserEntity, UserEntitySchema } from './user.model';
       { name: UserEntity.name, schema: UserEntitySchema },
     ]),
   ],
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [UserController, UserWebhookController],
+  providers: [UserService, WebhookSignatureService, UserRealtimeService],
   exports: [UserService],
 })
 export class UserModule {}

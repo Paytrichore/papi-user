@@ -3,6 +3,7 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { UserEntity } from './user.model';
+import { UserRealtimeService } from './user-realtime.service';
 
 describe('UserController', () => {
   let controller: UserController;
@@ -15,6 +16,11 @@ describe('UserController', () => {
     useActionPoints: jest.fn(),
     makeDraft: jest.fn(),
     findByEmail: jest.fn(),
+  };
+
+  const mockUserRealtimeService = {
+    subscribe: jest.fn(),
+    publish: jest.fn(),
   };
 
   // Mock Mongoose Model
@@ -32,6 +38,10 @@ describe('UserController', () => {
         {
           provide: UserService,
           useValue: mockUserService,
+        },
+        {
+          provide: UserRealtimeService,
+          useValue: mockUserRealtimeService,
         },
         {
           provide: getModelToken(UserEntity.name),

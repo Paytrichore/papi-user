@@ -20,6 +20,15 @@ export class UserEntity {
 
   @Prop({ default: false })
   drafted: boolean;
+
+  @Prop({ type: [String], default: [] })
+  processedEventIds: string[];
+
+  @Prop()
+  lastDraftPeblobId?: string;
+
+  @Prop()
+  lastDraftEventAt?: Date;
 }
 
 export type UserDocument = UserEntity & Document;

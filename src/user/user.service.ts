@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserEntity, UserDocument } from './user.model';
 import { CreateUserDTO } from './dto/createUser.dto';
+import { PeblobDraftEventDto } from './dto/peblob-draft-event.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -83,6 +84,24 @@ export class UserService {
     return user;
   }
 
+  async markDraftFromEvent(
+    event: PeblobDraftEventDto,
+  ): Promise<{ status: 'processed' | 'duplicate'; user: UserDocument }> {
+    const user = await this.checkAndUpdateDLA(event.userId);
+
+    if (user.processedEventIds.includes(event.eventId)) {
+      return { status: 'duplicate', user };
+    }
+
+    user.drafted = true;
+    user.processedEventIds.push(event.eventId);
+    user.lastDraftPeblobId = event.peblobId;
+    user.lastDraftEventAt = new Date(event.occurredAt);
+    await user.save();
+
+    return { status: 'processed', user };
+  }
+
   // Récupère le statut complet de l'utilisateur avec DLA à jour
   async getUserStatus(
   userId: string | Types.ObjectId,
@@ -134,6 +153,11 @@ export class UserService {
 
     if (user.actionPoints === undefined || user.actionPoints === null) {
       user.actionPoints = 10;
+      needsSave = true;
+    }
+
+    if (!Array.isArray(user.processedEventIds)) {
+      user.processedEventIds = [];
       needsSave = true;
     }
 

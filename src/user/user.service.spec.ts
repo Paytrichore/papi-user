@@ -80,4 +80,50 @@ describe('UserService markDraftFromEvent', () => {
     expect(result.status).toBe('duplicate');
     expect(result.user.save).not.toHaveBeenCalled();
   });
+
+  it('rejects a second draft in the same DLA', async () => {
+    const user = {
+      drafted: true,
+      processedEventIds: [],
+      save: jest.fn().mockResolvedValue(undefined),
+    } as unknown as UserDocument;
+
+    const event: PeblobDraftEventDto = {
+      eventType: 'peblob-created-from-draft',
+      eventId: 'new-event-id',
+      occurredAt: '2026-07-30T10:00:00.000Z',
+      userId: 'user-1',
+      peblobId: 'peblob-2',
+      correlationId: 'corr-2',
+    };
+
+    jest.spyOn(service, 'checkAndUpdateDLA').mockResolvedValue(user);
+
+    await expect(service.markDraftFromEvent(event)).rejects.toThrow(
+      'Draft déjà effectuée pour cette DLA',
+    );
+    expect(user.save).not.toHaveBeenCalled();
+  });
+
+  it('keeps DLA windows successive by twelve hours', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-08-06T13:00:00.000Z'));
+
+    const user = {
+      nextDLA: new Date('2026-08-05T00:00:00.000Z'),
+      drafted: true,
+      actionPoints: 2,
+      processedEventIds: [],
+      save: jest.fn().mockResolvedValue(undefined),
+    } as unknown as UserDocument;
+    mockModel.findById.mockResolvedValue(user);
+
+    const result = await service.checkAndUpdateDLA('user-1');
+
+    expect(result.nextDLA).toEqual(new Date('2026-08-07T00:00:00.000Z'));
+    expect(result.drafted).toBe(false);
+    expect(result.actionPoints).toBe(10);
+    expect(user.save).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
+  });
 });

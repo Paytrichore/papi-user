@@ -48,7 +48,12 @@ export class UserService {
     if (now >= nextDLA) {
       user.actionPoints = 10;
       user.drafted = false;
-      user.nextDLA = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+
+      do {
+        nextDLA.setTime(nextDLA.getTime() + 12 * 60 * 60 * 1000);
+      } while (now >= nextDLA);
+
+      user.nextDLA = nextDLA;
       await user.save();
     }
 
@@ -91,6 +96,10 @@ export class UserService {
 
     if (user.processedEventIds.includes(event.eventId)) {
       return { status: 'duplicate', user };
+    }
+
+    if (user.drafted) {
+      throw new Error('Draft déjà effectuée pour cette DLA');
     }
 
     user.drafted = true;

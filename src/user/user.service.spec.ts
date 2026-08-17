@@ -31,10 +31,11 @@ describe('UserService markDraftFromEvent', () => {
   });
 
   it('marks draft from a new event', async () => {
+    const save = jest.fn().mockResolvedValue(undefined);
     const user = {
       drafted: false,
       processedEventIds: [],
-      save: jest.fn().mockResolvedValue(undefined),
+      save,
     } as unknown as UserDocument;
 
     const event: PeblobDraftEventDto = {
@@ -54,14 +55,15 @@ describe('UserService markDraftFromEvent', () => {
     expect(result.user.drafted).toBe(true);
     expect(result.user.processedEventIds).toContain(event.eventId);
     expect(result.user.lastDraftPeblobId).toBe(event.peblobId);
-    expect(result.user.save).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledTimes(1);
   });
 
   it('returns duplicate when event already processed', async () => {
+    const save = jest.fn().mockResolvedValue(undefined);
     const user = {
       drafted: true,
       processedEventIds: ['7f718931-f6c7-4d01-81f9-4ef79d5baf47'],
-      save: jest.fn().mockResolvedValue(undefined),
+      save,
     } as unknown as UserDocument;
 
     const event: PeblobDraftEventDto = {
@@ -78,14 +80,15 @@ describe('UserService markDraftFromEvent', () => {
     const result = await service.markDraftFromEvent(event);
 
     expect(result.status).toBe('duplicate');
-    expect(result.user.save).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
   });
 
   it('rejects a second draft in the same DLA', async () => {
+    const save = jest.fn().mockResolvedValue(undefined);
     const user = {
       drafted: true,
       processedEventIds: [],
-      save: jest.fn().mockResolvedValue(undefined),
+      save,
     } as unknown as UserDocument;
 
     const event: PeblobDraftEventDto = {
@@ -102,19 +105,20 @@ describe('UserService markDraftFromEvent', () => {
     await expect(service.markDraftFromEvent(event)).rejects.toThrow(
       'Draft déjà effectuée pour cette DLA',
     );
-    expect(user.save).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
   });
 
   it('keeps DLA windows successive by twelve hours', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-08-06T13:00:00.000Z'));
 
+    const save = jest.fn().mockResolvedValue(undefined);
     const user = {
       nextDLA: new Date('2026-08-05T00:00:00.000Z'),
       drafted: true,
       actionPoints: 2,
       processedEventIds: [],
-      save: jest.fn().mockResolvedValue(undefined),
+      save,
     } as unknown as UserDocument;
     mockModel.findById.mockResolvedValue(user);
 
@@ -123,7 +127,7 @@ describe('UserService markDraftFromEvent', () => {
     expect(result.nextDLA).toEqual(new Date('2026-08-07T00:00:00.000Z'));
     expect(result.drafted).toBe(false);
     expect(result.actionPoints).toBe(10);
-    expect(user.save).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledTimes(1);
     jest.useRealTimers();
   });
 });

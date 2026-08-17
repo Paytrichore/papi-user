@@ -4,6 +4,10 @@ import { Model, Types } from 'mongoose';
 import { UserEntity, UserDocument } from './user.model';
 import { CreateUserDTO } from './dto/createUser.dto';
 import { PeblobDraftEventDto } from './dto/peblob-draft-event.dto';
+import {
+  WorldPlacementPointsEventDto,
+  WorldPlacementPointsRefundEventDto,
+} from './dto/world-placement-event.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -111,40 +115,96 @@ export class UserService {
     return { status: 'processed', user };
   }
 
+  async spendPlacementPoints(
+    event: WorldPlacementPointsEventDto,
+  ): Promise<{ status: 'processed' | 'duplicate'; user: UserDocument }> {
+    const user = await this.checkAndUpdateDLA(event.userId);
+    if (user.processedEventIds.includes(event.eventId)) {
+      return { status: 'duplicate', user };
+    }
+
+    if (user.actionPoints < event.points) {
+      throw new Error("Points d'action insuffisants");
+    }
+
+    const updated = await this.userModel
+      .findOneAndUpdate(
+        {
+          _id: event.userId,
+          actionPoints: { $gte: event.points },
+          processedEventIds: { $ne: event.eventId },
+        },
+        {
+          $inc: { actionPoints: -event.points },
+          $addToSet: { processedEventIds: event.eventId },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new Error("Points d'action insuffisants ou événement déjà traité");
+    }
+    return { status: 'processed', user: updated };
+  }
+
+  async refundPlacementPoints(
+    event: WorldPlacementPointsRefundEventDto,
+  ): Promise<{ status: 'processed' | 'duplicate'; user: UserDocument }> {
+    const user = await this.checkAndUpdateDLA(event.userId);
+    if (user.processedEventIds.includes(event.eventId)) {
+      return { status: 'duplicate', user };
+    }
+
+    const updated = await this.userModel
+      .findByIdAndUpdate(
+        event.userId,
+        {
+          $inc: { actionPoints: event.points },
+          $addToSet: { processedEventIds: event.eventId },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new Error('Utilisateur non trouvé');
+    }
+    return { status: 'processed', user: updated };
+  }
+
   // Récupère le statut complet de l'utilisateur avec DLA à jour
-  async getUserStatus(
-  userId: string | Types.ObjectId,
-): Promise<{
-  _id: string;
-  username: string;
-  email: string;
-  actionPoints: number;
-  nextDLA: Date;
-  drafted: boolean;
-  timeUntilNextDLA: { hours: number; minutes: number };
-}> {
-  const user = await this.checkAndUpdateDLA(userId);
+  async getUserStatus(userId: string | Types.ObjectId): Promise<{
+    _id: string;
+    username: string;
+    email: string;
+    actionPoints: number;
+    nextDLA: Date;
+    drafted: boolean;
+    timeUntilNextDLA: { hours: number; minutes: number };
+  }> {
+    const user = await this.checkAndUpdateDLA(userId);
 
-  const now = new Date();
-  const nextDLA = new Date(user.nextDLA); // Correction ici
-  const timeLeft = nextDLA.getTime() - now.getTime();
+    const now = new Date();
+    const nextDLA = new Date(user.nextDLA); // Correction ici
+    const timeLeft = nextDLA.getTime() - now.getTime();
 
-  const hours = Math.floor(timeLeft / (60 * 60 * 1000));
-  const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+    const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+    const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
 
-  return {
-    _id: user._id as string,
-    username: user.username,
-    email: user.email,
-    actionPoints: user.actionPoints,
-    nextDLA: nextDLA,
-    drafted: user.drafted,
-    timeUntilNextDLA: {
-      hours: Math.max(0, hours),
-      minutes: Math.max(0, minutes),
-    },
-  };
-}
+    return {
+      _id: user._id as string,
+      username: user.username,
+      email: user.email,
+      actionPoints: user.actionPoints,
+      nextDLA: nextDLA,
+      drafted: user.drafted,
+      timeUntilNextDLA: {
+        hours: Math.max(0, hours),
+        minutes: Math.max(0, minutes),
+      },
+    };
+  }
 
   // Migration automatique des utilisateurs existants
   private async migrateUserIfNeeded(user: UserDocument): Promise<UserDocument> {

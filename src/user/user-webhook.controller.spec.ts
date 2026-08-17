@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserWebhookController } from './user-webhook.controller';
+import {
+  RawBodyRequest,
+  UserWebhookController,
+} from './user-webhook.controller';
 import { UserService } from './user.service';
 import { WebhookSignatureService } from './webhook-signature.service';
 import { UserRealtimeService } from './user-realtime.service';
@@ -65,7 +68,7 @@ describe('UserWebhookController', () => {
       event,
       'sha256=signature',
       String(Date.now()),
-      { rawBody: JSON.stringify(event) } as any,
+      { rawBody: JSON.stringify(event) } as RawBodyRequest,
     );
 
     expect(mockSignatureService.assertValidSignature).toHaveBeenCalled();

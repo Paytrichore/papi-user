@@ -13,6 +13,14 @@ import { AuthService } from './auth.service';
 import { CreateUserDTO } from 'src/user/dto/createUser.dto';
 import { UserService } from 'src/user/user.service';
 import { Types } from 'mongoose';
+import { Request } from 'express';
+
+interface GoogleAuthRequest extends Request {
+  user: {
+    access_token: string;
+    user: unknown;
+  };
+}
 
 @Controller('auth')
 export class AuthController {
@@ -23,13 +31,13 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth() {
+  googleAuth() {
     // redirige vers Google
   }
 
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req) {
+  googleAuthRedirect(@Req() req: GoogleAuthRequest) {
     // req.user contient { access_token, user }
     return req.user;
   }
@@ -44,7 +52,7 @@ export class AuthController {
       );
     }
     const user = await this.userService.createUser(createUserDto);
-    const token = await this.authService.login(user);
+    const token = this.authService.login(user);
     return { access_token: token, user };
   }
 
@@ -60,7 +68,7 @@ export class AuthController {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    const token = await this.authService.login(user);
+    const token = this.authService.login(user);
     const userStatus = await this.userService.getUserStatus(
       user._id as Types.ObjectId,
     );

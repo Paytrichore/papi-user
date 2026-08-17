@@ -1,25 +1,31 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import * as bodyParser from 'body-parser';
+import { json, urlencoded } from 'body-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Request, Response } from 'express';
+import { CorsOptions } from 'cors';
+
+interface RawBodyRequest extends Request {
+  rawBody?: string;
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use(
-    bodyParser.json({
-      verify: (req: any, _res, buf) => {
+    json({
+      verify: (req: RawBodyRequest, _res: Response, buf: Buffer) => {
         req.rawBody = buf.toString('utf8');
       },
     }),
   );
 
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(urlencoded({ extended: true }));
 
   app.useGlobalPipes(new ValidationPipe());
 
-  app.enableCors({
+  const corsOptions: CorsOptions = {
     origin: (origin, callback) => {
       // Autorise localhost, tous les sous-domaines de dev et le domaine prod
       const allowedOrigins = [
@@ -36,7 +42,8 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
-  });
+  };
+  app.enableCors(corsOptions);
 
   const config = new DocumentBuilder()
     .setTitle('Papi User API')

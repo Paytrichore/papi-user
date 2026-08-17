@@ -17,7 +17,7 @@ import { Observable } from 'rxjs';
 import { UserRealtimeService } from './user-realtime.service';
 
 export interface JwtPayload {
-  sub: string;
+  userId: string;
   email: string;
   iat?: number;
   exp?: number;
@@ -41,14 +41,14 @@ export class UserController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  async getProfile(@Req() req: any) {
+  async getProfile(@Req() req: JwtRequest) {
     return this.userService.getUserStatus(req.user.userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('use-points')
   async useActionPoints(
-    @Req() req: any,
+    @Req() req: JwtRequest,
     @Body('points') points: number,
   ) {
     return this.userService.useActionPoints(req.user.userId, points);
@@ -56,13 +56,13 @@ export class UserController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post('draft')
-  async makeDraft(@Req() req: any) {
+  async makeDraft(@Req() req: JwtRequest) {
     return this.userService.makeDraft(req.user.userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('status')
-  async getStatus(@Req() req: any) {
+  async getStatus(@Req() req: JwtRequest) {
     return this.userService.getUserStatus(req.user.userId);
   }
 
@@ -71,7 +71,7 @@ export class UserController {
   @Header('Content-Type', 'text/event-stream')
   @Header('Cache-Control', 'no-cache')
   @Header('Connection', 'keep-alive')
-  events(@Req() req: any): Observable<MessageEvent> {
+  events(@Req() req: JwtRequest): Observable<MessageEvent> {
     return this.userRealtimeService.subscribe(req.user.userId);
   }
 }

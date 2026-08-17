@@ -4,6 +4,11 @@ import { UserService } from '../user/user.service';
 import { UserDocument } from 'src/user/user.model';
 import * as bcrypt from 'bcrypt';
 
+export interface OAuthLoginResult {
+  access_token: string;
+  user: UserDocument;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -11,7 +16,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateOAuthLogin(email: string, username: string): Promise<any> {
+  async validateOAuthLogin(
+    email: string,
+    username: string,
+  ): Promise<OAuthLoginResult> {
     let user = await this.userService.findByEmail(email);
     if (!user) {
       user = await this.userService.createUser({
@@ -40,7 +48,7 @@ export class AuthService {
   }
 
   // Génère le JWT pour un utilisateur
-  async login(user: UserDocument): Promise<string> {
+  login(user: UserDocument): string {
     const payload = { email: user.email, sub: user._id };
     return this.jwtService.sign(payload);
   }

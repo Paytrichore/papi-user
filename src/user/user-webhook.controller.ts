@@ -1,11 +1,15 @@
 import { Body, Controller, Headers, Post, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { PeblobDraftEventDto } from './dto/peblob-draft-event.dto';
+import {
+  WorldPlacementPointsEventDto,
+  WorldPlacementPointsRefundEventDto,
+} from './dto/world-placement-event.dto';
 import { UserRealtimeService } from './user-realtime.service';
 import { UserService } from './user.service';
 import { WebhookSignatureService } from './webhook-signature.service';
 
-interface RawBodyRequest extends Request {
+export interface RawBodyRequest extends Request {
   rawBody?: string;
 }
 
@@ -40,6 +44,46 @@ export class UserWebhookController {
       },
     });
 
+    return {
+      status: result.status,
+      userId: event.userId,
+      eventId: event.eventId,
+    };
+  }
+
+  @Post('world-placement-points')
+  async handleWorldPlacementPoints(
+    @Body() event: WorldPlacementPointsEventDto,
+    @Headers('x-webhook-signature') signature: string | undefined,
+    @Headers('x-webhook-timestamp') timestamp: string | undefined,
+    @Req() req: RawBodyRequest,
+  ) {
+    this.signatureService.assertValidSignature(
+      signature,
+      timestamp,
+      req.rawBody ?? JSON.stringify(event),
+    );
+    const result = await this.userService.spendPlacementPoints(event);
+    return {
+      status: result.status,
+      userId: event.userId,
+      eventId: event.eventId,
+    };
+  }
+
+  @Post('world-placement-points/refund')
+  async handleWorldPlacementPointsRefund(
+    @Body() event: WorldPlacementPointsRefundEventDto,
+    @Headers('x-webhook-signature') signature: string | undefined,
+    @Headers('x-webhook-timestamp') timestamp: string | undefined,
+    @Req() req: RawBodyRequest,
+  ) {
+    this.signatureService.assertValidSignature(
+      signature,
+      timestamp,
+      req.rawBody ?? JSON.stringify(event),
+    );
+    const result = await this.userService.refundPlacementPoints(event);
     return {
       status: result.status,
       userId: event.userId,

@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserEntity, UserDocument } from './user.model';
@@ -59,7 +63,12 @@ export class UserService {
     userId: string | Types.ObjectId,
   ): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
+    if (!user) {
+      throw new NotFoundException({
+        code: 'USER_NOT_FOUND',
+        message: 'Utilisateur non trouvé',
+      });
+    }
 
     await this.migrateUserIfNeeded(user);
 
@@ -89,7 +98,10 @@ export class UserService {
     const user = await this.checkAndUpdateDLA(userId);
 
     if (user.actionPoints < points) {
-      throw new Error("Points d'action insuffisants");
+      throw new UnprocessableEntityException({
+        code: 'INSUFFICIENT_ACTION_POINTS',
+        message: "Points d'action insuffisants",
+      });
     }
 
     user.actionPoints -= points;
@@ -102,7 +114,10 @@ export class UserService {
     const user = await this.checkAndUpdateDLA(userId);
 
     if (user.drafted) {
-      throw new Error('Draft déjà effectuée pour cette DLA');
+      throw new UnprocessableEntityException({
+        code: 'DRAFT_ALREADY_DONE',
+        message: 'Draft déjà effectuée pour cette DLA',
+      });
     }
 
     user.drafted = true;
@@ -120,7 +135,10 @@ export class UserService {
     }
 
     if (user.drafted) {
-      throw new Error('Draft déjà effectuée pour cette DLA');
+      throw new UnprocessableEntityException({
+        code: 'DRAFT_ALREADY_DONE',
+        message: 'Draft déjà effectuée pour cette DLA',
+      });
     }
 
     user.drafted = true;
@@ -141,7 +159,10 @@ export class UserService {
     }
 
     if (user.actionPoints < event.points) {
-      throw new Error("Points d'action insuffisants");
+      throw new UnprocessableEntityException({
+        code: 'INSUFFICIENT_ACTION_POINTS',
+        message: "Points d'action insuffisants",
+      });
     }
 
     const updated = await this.userModel
@@ -160,7 +181,10 @@ export class UserService {
       .exec();
 
     if (!updated) {
-      throw new Error("Points d'action insuffisants ou événement déjà traité");
+      throw new UnprocessableEntityException({
+        code: 'INSUFFICIENT_ACTION_POINTS',
+        message: "Points d'action insuffisants",
+      });
     }
     return { status: 'processed', user: updated };
   }
@@ -185,7 +209,10 @@ export class UserService {
       .exec();
 
     if (!updated) {
-      throw new Error('Utilisateur non trouvé');
+      throw new NotFoundException({
+        code: 'USER_NOT_FOUND',
+        message: 'Utilisateur non trouvé',
+      });
     }
     return { status: 'processed', user: updated };
   }

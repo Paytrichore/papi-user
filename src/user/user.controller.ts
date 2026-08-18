@@ -5,6 +5,7 @@ import {
   Header,
   MessageEvent,
   Post,
+  Param,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -64,6 +65,11 @@ export class UserController {
   @Get('status')
   async getStatus(@Req() req: JwtRequest) {
     return this.userService.getUserStatus(req.user.userId);
+  }
+
+  @Get(':id')
+  async getPublicProfile(@Param('id') id: string) {
+    return this.userService.getPublicProfile(id);
   }
 
   @UseGuards(AuthGuard('jwt'))

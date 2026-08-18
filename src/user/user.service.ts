@@ -37,6 +37,23 @@ export class UserService {
     return this.userModel.findOne({ email });
   }
 
+  async getPublicProfile(
+    userId: string,
+  ): Promise<{ id: string; username: string } | null> {
+    const user = await this.userModel
+      .findById(userId)
+      .select('_id username')
+      .exec();
+    if (!user) {
+      return null;
+    }
+
+    return {
+      id: String(user._id),
+      username: user.username,
+    };
+  }
+
   // Vérifie si une nouvelle DLA a commencé et met à jour l'utilisateur => Trigger au login ? Penser au refresh sur la page ?
   async checkAndUpdateDLA(
     userId: string | Types.ObjectId,
